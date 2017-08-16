@@ -203,6 +203,6 @@ void ImageEditor::chkResise()
 
 	if(m_ramkaSize.height()>m_img.height()){
 		m_ramkaSize.setHeight(m_img.height());
-		m_ramkaSize.setWidth(m_ramkaSize.height()/m_r);
+		m_ramkaSize.setWidth(m_ramkaSize.height()*m_r);
 	}
 }
