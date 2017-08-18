@@ -30,18 +30,12 @@ QImage ImageEditor::getImage()
 
 void ImageEditor::setNewSize(const QSize &size)
 {
-	if(!m_img.isNull()){
-		unsigned int rw=0;
-		unsigned int rh=0;
-		if(size.width()>m_img.width()) rw = size.width()-m_img.width();
-		if(size.height()>m_img.height()) rh = size.height()-m_img.height();
-		m_ramkaSize.setWidth(size.width()-rw-rh);
-		m_ramkaSize.setHeight(size.height()-rw-rh);
-	}else{
-		m_ramkaSize.setWidth(10);
-		m_ramkaSize.setHeight(10);
-	}
-	m_r=(float)m_ramkaSize.width()/(float)m_ramkaSize.height();
+	m_r=(float)size.width()/(float)size.height();
+	m_ramkaSize.setWidth(size.width());
+	m_ramkaSize.setHeight(size.height());
+
+	chkResise();
+
 	m_ramkaPos.setX((this->width()/2)-(m_ramkaSize.width()/2));
 	m_ramkaPos.setY((this->height()/2)-(m_ramkaSize.height()/2));
 }
