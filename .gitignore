@@ -1,1 +1,4 @@
 *.user
+build-src*
+bin*
+*build-*
