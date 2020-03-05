@@ -13,7 +13,7 @@ public:
 	QImage getImage();
 	void setCropSize(const QSize &size);
 	void setLayersCount(const uint8_t count = 1);
-	void setLayerHSV(const uint8_t layerNum = 0, int hue = -1, int saturation = 0, int bright = 0);
+	void setLayerHSV(const uint8_t layerNum = 0, int color = -1, int saturation = 0, int light = 100);
 	void setCropMode(bool cropMode = false);
 protected:
 	void paintEvent(QPaintEvent *event) override;
@@ -26,6 +26,7 @@ private:
 	QList< QImage > m_layersOrig;
 	QSize m_maxSize;
 	float m_ri;
+	QPoint m_ramkaOffset;
 
 
 

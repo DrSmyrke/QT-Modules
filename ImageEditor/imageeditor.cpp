@@ -1,5 +1,4 @@
 #include "imageeditor.h"
-
 #include <QPainter>
 
 ImageEditor::ImageEditor(QWidget *parent) : QWidget(parent)
@@ -32,10 +31,15 @@ QImage ImageEditor::getImage()
 	}
 
 	if( m_cropMode ){
-		//TODO: fix crop image!!!
-		int rx = ( this->width() / 2 ) - ( img.width() / 2 );
-		int ry = ( this->height() / 2 ) - ( img.height() / 2 );
-		return img.copy(m_ramkaPos.x(),m_ramkaPos.y(),m_ramkaSize.width(),m_ramkaSize.height());
+		float rw = ( m_maxSize.width() >= img.width() ) ? (float)m_maxSize.width() / (float)img.width() : (float)img.width() / (float)m_maxSize.width() ;
+		float rh = ( m_maxSize.height() >= img.height() ) ? (float)m_maxSize.height() / (float)img.height() : (float)img.height() / (float)m_maxSize.height() ;
+		int x = m_ramkaPos.x() - m_ramkaOffset.x();
+		int y = m_ramkaPos.y() - m_ramkaOffset.y();
+		int w = m_ramkaSize.width() / rw;
+		int h = m_ramkaSize.height() / rh;
+		x /= rw;
+		y /= rh;
+		return img.copy( x, y, w, h);
 	}
 
 	return img;
@@ -64,7 +68,7 @@ void ImageEditor::setLayersCount(const uint8_t count)
 	m_maxSize = QSize( 0, 0 );
 }
 
-void ImageEditor::setLayerHSV(const uint8_t layerNum, int hue, int saturation, int bright)
+void ImageEditor::setLayerHSV(const uint8_t layerNum, int color, int saturation, int light)
 {
 	if( layerNum >= m_layers.size() ) return;
 
@@ -72,24 +76,40 @@ void ImageEditor::setLayerHSV(const uint8_t layerNum, int hue, int saturation, i
 
 	for (int i = 0; i < m_layers[ layerNum ].width(); i++){
 		for (int j = 0; j < m_layers[ layerNum ].height(); j++){
-			QColor color = m_layers[ layerNum ].pixelColor(i, j);
+			QColor pixelColor = m_layers[ layerNum ].pixelColor(i, j);
 			//Если пиксель прозрачный
-			if( color.alpha() == 0 ) continue;
+			if( pixelColor.alpha() == 0 ) continue;
 			//Если пиксель уже цветной
-			if( color.hsvSaturation() > 0 ) continue;
-			if( color.red() == 0 && color.green() == 0 && color.blue() == 0 ) continue;
-			if( color.red() == 255 && color.green() == 255 && color.blue() == 255 ) continue;
+			if( pixelColor.hsvSaturation() > 0 ) continue;
+			if( pixelColor.red() == 0 && pixelColor.green() == 0 && pixelColor.blue() == 0 ) continue;
+			if( pixelColor.red() == 255 && pixelColor.green() == 255 && pixelColor.blue() == 255 ) continue;
 
-			if( color.lightness() < 5 ) continue;
-			int r = color.lightness() / 2;
+			if( pixelColor.lightness() < 5 ) continue;
 
-			int newBright = color.lightness() + bright - r;
-			if( newBright > 100 ) newBright = 100;
-			if( newBright < 0 ) newBright = 0;
-			//color.setHsv( color.hsvHue(), color.hsvSaturation(), newBright,  color.alpha() );
-			color = color.lighter(bright);
+			//int r = pixelColor.lightness() / 2;
+			int s = saturation;
+			if( s > 100 ){
+				s = 100;
+			}
+			if( s < 0 ){
+				s = 0;
+			}
+			int h = color;
+			if( h > 359 ){
+				h = 359;
+			}
+			if( h < 0 ){
+				h = 0;
+			}
 
-			m_layers[ layerNum ].setPixelColor(i, j, color);
+			//int newBright = color.lightness() + light - r;
+			//if( newBright > 100 ) newBright = 100;
+			//if( newBright < 0 ) newBright = 0;
+
+			pixelColor.setHsv( h, s, pixelColor.lightness(),  pixelColor.alpha() );
+			pixelColor = pixelColor.lighter( light );
+
+			m_layers[ layerNum ].setPixelColor(i, j, pixelColor);
 		}
 	}
 	this->update();
@@ -123,14 +143,15 @@ void ImageEditor::paintEvent(QPaintEvent *event)
 		}
 		int lrx = 0;
 		int lry = 0;
+
 		if( this->width() > img.width() || this->height() > img.height() ){
 			lrx = ( this->width() / 2 ) - ( nw / 2 );
 			lry = ( this->height() / 2 ) - ( nh / 2 );
 		}
-		int iw = img.width();
-		int ih = img.height();
-		int ww = this->width();
-		int wh = this->height();
+//		int iw = img.width();
+//		int ih = img.height();
+//		int ww = this->width();
+//		int wh = this->height();
 
 		if( lrx > rx ){
 			rx = lrx;
@@ -144,6 +165,9 @@ void ImageEditor::paintEvent(QPaintEvent *event)
 		if( nh > m_maxSize.height() ){
 			m_maxSize.setHeight( nh );
 		}
+
+		m_ramkaOffset.setX( lrx );
+		m_ramkaOffset.setY( lry );
 
 		QRectF rect;
 		rect.setX( lrx );
